@@ -1,0 +1,9 @@
+# Building a Digital Twin for Network Optimization using Graph Neural Networks
+#### Miquel Ferriol-Galmés, José Suárez-Varela, Bo Wu, Shihan Xiao, Xiangle Cheng, Pere Barlet-Ros and Albert Cabellos-Aparicio
+
+### Abstract
+Network modeling is a critical component for Quality of Service (QoS) optimization. Current networks implement Service Level Agreements (SLA) by careful configuration of both routing and queue scheduling policies. However, existing modeling techniques are not able to produce accurate estimates of relevant SLA metrics, such as delay or jitter, in networks with complex QoS-aware queueing policies (e.g., strict priority, Weighted Fair Queueing, Deficit Round Robin). In this paper, we propose a Graph Neural Network (GNN) model able to understand the complex relationship between: (i) the queueing policy (scheduling algorithm and queue sizes), (ii) the topology, (iii) the routing configuration, and (iv) the input traffic matrix. We call our GNN-based model TwinNet, a Digital Twin of the network. TwinNet can generalize to its input parameters, operating successfully in topologies, routing and queueing configurations never seen during training. We evaluate TwinNet over a wide variety of scenarios with synthetic traffic, and validate it with real traffic traces. Our results show that TwinNet can provide accurate estimates of end-to-end path delays in 106 unseen real-world topologies, under different queuing configurations (MRE=4.5%). We also showcase the potential of the proposed model for SLA-driven network optimization and what-if analysis through several relevant use cases.
+
+### Datasets
+All  the datasets used for this paper can be found at:
+[Datasets](https://bnn.upc.edu/)
