@@ -16,7 +16,7 @@ pip install -r requirements.txt
 You can run the optimizer by running the following command:
 ```
 python optimize_routing.py
-python optimize_schedulingg.py
+python optimize_scheduling.py
 python optimize_scheduling_routing.py
 python link_failure.py
 python network_upgrade.py
