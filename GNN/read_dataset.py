@@ -31,41 +31,44 @@ def sample_to_dependency_graph(sample):
     for src in range(G.number_of_nodes()):
         for dst in range(G.number_of_nodes()):
             if src != dst:
-                D_G.add_node('p_{}_{}'.format(src, dst),
-                             traffic=T[src, dst]['Flows'][0]['AvgBw'],
-                             packets=T[src, dst]['Flows'][0]['PktsGen'],
-                             tos=int(T[src, dst]['Flows'][0]['ToS']),
-                             source=src,
-                             destination=dst,
-                             delay=float(P[src, dst]['AggInfo']['AvgDelay']))
-
                 if G.has_edge(src, dst):
                     D_G.add_node('l_{}_{}'.format(src, dst),
                                  capacity=G.edges[src, dst]['bandwidth'],
                                  policy=np.where(G.nodes[src]['schedulingPolicy'] == POLICIES)[0][0])
-                for h_1, h_2 in [R[src, dst][i:i + 2] for i in range(0, len(R[src, dst]) - 1)]:
-                    D_G.add_edge('p_{}_{}'.format(src, dst), 'l_{}_{}'.format(h_1, h_2))
-                    q_s = str(G.nodes[h_1]['queueSizes']).split(',')
-                    # policy = G.nodes[h_1]['schedulingPolicy']
-                    if 'schedulingWeights' in G.nodes[h_1]:
-                        q_w = str(G.nodes[h_1]['schedulingWeights']).split(',')
-                    else:
-                        q_w = ['-']
-                    if 'tosToQoSqueue' in G.nodes[h_1]:
-                        map = [m.split(',') for m in str(G.nodes[h_1]['tosToQoSqueue']).split(';')]
-                    else:
-                        map = [['0'], ['1'], ['2']]
-                    q_n = 0
-                    for q in range(G.nodes[h_1]['levelsQoS']):
-                        D_G.add_node('q_{}_{}_{}'.format(h_1, h_2, q),
-                                     size=int(q_s[q]),
-                                     priority=q_n,
-                                     weight=float(q_w[q]) if q_w[0] != '-' else 0)
-                        D_G.add_edge('l_{}_{}'.format(h_1, h_2), 'q_{}_{}_{}'.format(h_1, h_2, q))
-                        if str(int(T[src, dst]['Flows'][0]['ToS'])) in map[q]:
-                            D_G.add_edge('p_{}_{}'.format(src, dst), 'q_{}_{}_{}'.format(h_1, h_2, q))
-                            D_G.add_edge('q_{}_{}_{}'.format(h_1, h_2, q), 'p_{}_{}'.format(src, dst))
-                        q_n += 1
+
+                for f_id in range(len(T[src, dst]['Flows'])):
+                    if T[src, dst]['Flows'][f_id]['AvgBw'] != 0 and T[src, dst]['Flows'][f_id]['PktsGen'] != 0:
+                        D_G.add_node('p_{}_{}'.format(src, dst),
+                                     traffic=T[src, dst]['Flows'][f_id]['AvgBw'],
+                                     packets=T[src, dst]['Flows'][f_id]['PktsGen'],
+                                     tos=int(T[src, dst]['Flows'][f_id]['ToS']),
+                                     source=src,
+                                     destination=dst,
+                                     delay=float(P[src, dst]['AggInfo']['AvgDelay']))
+
+                        for h_1, h_2 in [R[src, dst][i:i + 2] for i in range(0, len(R[src, dst]) - 1)]:
+                            D_G.add_edge('p_{}_{}'.format(src, dst), 'l_{}_{}'.format(h_1, h_2))
+                            q_s = str(G.nodes[h_1]['queueSizes']).split(',')
+                            # policy = G.nodes[h_1]['schedulingPolicy']
+                            if 'schedulingWeights' in G.nodes[h_1]:
+                                q_w = str(G.nodes[h_1]['schedulingWeights']).split(',')
+                            else:
+                                q_w = ['-']
+                            if 'tosToQoSqueue' in G.nodes[h_1]:
+                                map = [m.split(',') for m in str(G.nodes[h_1]['tosToQoSqueue']).split(';')]
+                            else:
+                                map = [['0'], ['1'], ['2']]
+                            q_n = 0
+                            for q in range(G.nodes[h_1]['levelsQoS']):
+                                D_G.add_node('q_{}_{}_{}'.format(h_1, h_2, q),
+                                             size=int(q_s[q]),
+                                             priority=q_n,
+                                             weight=float(q_w[q]) if q_w[0] != '-' else 0)
+                                D_G.add_edge('l_{}_{}'.format(h_1, h_2), 'q_{}_{}_{}'.format(h_1, h_2, q))
+                                if str(int(T[src, dst]['Flows'][f_id]['ToS'])) in map[q]:
+                                    D_G.add_edge('p_{}_{}'.format(src, dst), 'q_{}_{}_{}'.format(h_1, h_2, q))
+                                    D_G.add_edge('q_{}_{}_{}'.format(h_1, h_2, q), 'p_{}_{}'.format(src, dst))
+                                q_n += 1
 
     D_G.remove_nodes_from([node for node, out_degree in D_G.out_degree() if out_degree == 0])
 
@@ -92,7 +95,6 @@ def generator(data_dir, shuffle=False, topology_size=None):
     tool = DatanetAPI(data_dir, [], shuffle)
     it = iter(tool)
     for sample in it:
-
         D_G, n_q, n_p, n_l = sample_to_dependency_graph(sample)
 
         link_to_path = np.array([], dtype='int32')
@@ -136,6 +138,7 @@ def generator(data_dir, shuffle=False, topology_size=None):
 
         if -1 in list(nx.get_node_attributes(D_G, 'delay').values()):
             continue
+
 
         yield {"traffic": list(nx.get_node_attributes(D_G, 'traffic').values()),
                "packets": list(nx.get_node_attributes(D_G, 'packets').values()),

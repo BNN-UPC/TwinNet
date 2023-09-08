@@ -807,8 +807,8 @@ class DatanetAPI:
 
             ctr += 1
             #print("Progress check: %d/%d" % (ctr,len(tuple_files)))
-        print(error_files)
-        print (len(error_files))
+        #print(error_files)
+        #print (len(error_files))
     
     def _process_flow_results_traffic_line(self, rline, tline, fline, sline, s):
         """
