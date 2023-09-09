@@ -103,7 +103,7 @@ def predict_and_save(test_dir, model_dir, save_dir, filename, config):
     Returns:
         float: The Mean Absolute Percentage Error.
     """
-
+    print("Predicting and saving the results...")
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -118,7 +118,6 @@ def predict_and_save(test_dir, model_dir, save_dir, filename, config):
     df_files = []
     delays = np.array([])
     for predictors, target in ds:
-
         delays = np.append(delays, target)
 
         if it % 1000 == 0:
@@ -131,30 +130,30 @@ def predict_and_save(test_dir, model_dir, save_dir, filename, config):
             delays = np.array([])
 
             if it % 3000 == 0:
-                df = pd.concat(dataframes_to_concat)
-                file = os.path.join(tmp_dir, "tmp_df_" + str(it) + ".parquet")
-                df.to_parquet(file)
-                df_files.append(file)
-                dataframes_to_concat = []
+                if len(dataframes_to_concat) > 0:
+                    df = pd.concat(dataframes_to_concat)
+                    file = os.path.join(tmp_dir, "tmp_df_" + str(it) + ".parquet")
+                    df.to_parquet(file)
+                    df_files.append(file)
+                    dataframes_to_concat = []
 
         it += 1
-
+    it -= 1
     if it % 3000 != 0:
         if it % 1000 != 0:
-
             aux_df = pd.DataFrame({
                 "Delay": delays
             })
 
             dataframes_to_concat.append(aux_df)
 
-        df = pd.concat(dataframes_to_concat)
-        file = os.path.join(tmp_dir, "tmp_df_" + str(it) + ".parquet")
-        df.to_parquet(file)
-        df_files.append(file)
+        if len(dataframes_to_concat) > 0:
+            df = pd.concat(dataframes_to_concat)
+            file = os.path.join(tmp_dir, "tmp_df_" + str(it) + ".parquet")
+            df.to_parquet(file)
+            df_files.append(file)
 
     df_list = []
-
     for file in df_files:
         df_list.append(pd.read_parquet(os.path.join(file)))
 
@@ -167,7 +166,7 @@ def predict_and_save(test_dir, model_dir, save_dir, filename, config):
 
     df["Predicted_Delay"] = predictions
     df['Absolute_Error'] = np.abs(df["Delay"] - df["Predicted_Delay"])
-    df['Absolute_Percentage_Error'] = (df['Absolute_Error'] / np.abs(df["Delay"]))*100
+    df['Absolute_Percentage_Error'] = (df['Absolute_Error'] / np.abs(df["Delay"])) * 100
 
     return df['Absolute_Percentage_Error'].mean()
 
@@ -187,3 +186,4 @@ if __name__ == '__main__':
                            '../dataframes/',
                            'predictions.csv',
                            config._sections)
+    print("MRE: ", mre)
